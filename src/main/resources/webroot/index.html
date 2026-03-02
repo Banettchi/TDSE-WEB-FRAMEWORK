@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Servidor Web TDSE</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+
+    <h1>Servidor Web TDSE</h1>
+
+    <hr>
+
+    <!-- Servicio: Hello -->
+    <section>
+        <h2>Servicio: /App/hello</h2>
+        <label for="nombre">Ingresa tu nombre</label>
+        <div class="form-row">
+            <input type="text" id="nombre" placeholder="Nombre">
+            <button onclick="irHello()">Enviar</button>
+        </div>
+    </section>
+
+    <hr>
+
+    <!-- Servicio: Pi -->
+    <section>
+        <h2>Servicio: /App/pi</h2>
+        <p class="desc">Devuelve el valor de π (Pi)</p>
+        <a href="/App/pi">http://localhost:8080/App/pi</a>
+    </section>
+
+    <hr>
+
+    <!-- Servicio: Epsilon -->
+    <section>
+        <h2>Servicio: /App/epsilon</h2>
+        <p class="desc">Devuelve el número de Euler ε (e)</p>
+        <a href="/App/epsilon">http://localhost:8080/App/epsilon</a>
+    </section>
+
+    <script>
+        function irHello() {
+            const nombre = document.getElementById('nombre').value.trim();
+            if (!nombre) return;
+            window.location.href = '/App/hello?name=' + encodeURIComponent(nombre);
+        }
+    </script>
+
+</body>
+
+</html>
