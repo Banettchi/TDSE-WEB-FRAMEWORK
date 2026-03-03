@@ -1,5 +1,56 @@
 # Servidor Web TDSE — Framework REST en Java
 
+## Código base proporcionado por el profesor
+
+Este proyecto parte del siguiente servidor HTTP básico suministrado en clase (taller 4–7 pm), el cual acepta conexiones TCP y responde peticiones simples:
+
+```java
+import java.net.*;
+import java.io.*;
+
+public class HttpServer {
+
+    public static void main(String[] args) throws IOException, URISyntaxException {
+        ServerSocket serverSocket = new ServerSocket(35000);
+        Socket clientSocket = null;
+        boolean running = true;
+
+        while (running) {
+            System.out.println("Listo para recibir ...");
+            clientSocket = serverSocket.accept();
+
+            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+            BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+
+            boolean firstLine = true;
+            String reqpath = "";
+
+            while ((inputLine = in.readLine()) != null) {
+                if (firstLine) {
+                    URI requri = new URI(inputLine.split(" ")[1]);
+                    reqpath = requri.getPath();
+                    firstLine = false;
+                }
+                if (!in.ready()) break;
+            }
+
+            if (reqpath.equals("/pi")) {
+                out.println("HTTP/1.1 200 OK\r\n..." + Math.PI + "...");
+            } else {
+                out.println("HTTP/1.1 200 OK\r\n...My Web Site...");
+            }
+
+            out.close(); in.close(); clientSocket.close();
+        }
+        serverSocket.close();
+    }
+}
+```
+
+A partir de este punto de partida se construyó el framework completo descrito en este documento.
+
+---
+
 ## Descripción
 
 Este proyecto extiende un servidor HTTP básico convirtiéndolo en un mini framework web que permite a los desarrolladores registrar servicios REST mediante funciones lambda, leer parámetros de las URLs y servir archivos estáticos directamente desde el classpath, todo sin dependencias externas.
@@ -18,8 +69,8 @@ El punto de partida fue un servidor TCP simple que aceptaba conexiones HTTP. A p
 El resultado es un servidor completamente funcional con una API tan sencilla como:
 
 ```java
-staticfiles("/webroot");
-get("/App/hello", (req, res) -> "Hello " + req.getValues("name"));
+WebFramework.staticfiles("/webroot");
+WebFramework.get("/App/hello", (req, res) -> "Hello " + req.getValues("name"));
 WebFramework.start(8080);
 ```
 
@@ -30,21 +81,21 @@ WebFramework.start(8080);
 ### 1. Registro de rutas con `get()`
 
 ```java
-get("/App/hello", (req, res) -> "Hello World!");
-get("/App/pi",    (req, res) -> String.valueOf(Math.PI));
+WebFramework.get("/App/hello", (req, res) -> "Hello World!");
+WebFramework.get("/App/pi",   (req, res) -> String.valueOf(Math.PI));
 ```
 
 ### 2. Lectura de parámetros de la URL con `req.getValues()`
 
 ```java
-get("/App/hello", (req, res) -> "Hello " + req.getValues("name"));
+WebFramework.get("/App/hello", (req, res) -> "Hello " + req.getValues("name"));
 // GET /App/hello?name=Pedro  →  Hello Pedro
 ```
 
 ### 3. Archivos estáticos con `staticfiles()`
 
 ```java
-staticfiles("/webroot");
+WebFramework.staticfiles("/webroot");
 // Sirve: src/main/resources/webroot/index.html, style.css, etc.
 ```
 
@@ -52,10 +103,10 @@ staticfiles("/webroot");
 
 ```java
 public static void main(String[] args) {
-    staticfiles("/webroot");
-    get("/App/hello",   (req, resp) -> "Hello " + req.getValues("name"));
-    get("/App/pi",      (req, resp) -> String.valueOf(Math.PI));
-    get("/App/epsilon", (req, resp) -> String.valueOf(Math.E));
+    WebFramework.staticfiles("/webroot");
+    WebFramework.get("/App/hello",   (req, resp) -> "Hello " + req.getValues("name"));
+    WebFramework.get("/App/pi",      (req, resp) -> String.valueOf(Math.PI));
+    WebFramework.get("/App/epsilon", (req, resp) -> String.valueOf(Math.E));
     WebFramework.start(8080);
 }
 ```
@@ -97,18 +148,26 @@ mi-proyecto-java/
 ├── src/
 │   ├── main/
 │   │   ├── java/com/example/
-│   │   │   ├── App.java
-│   │   │   ├── HttpServer.java
-│   │   │   ├── HttpRequest.java
-│   │   │   ├── HttpResponse.java
-│   │   │   ├── Route.java
-│   │   │   ├── WebFramework.java
-│   │   │   └── URLReader.java
+│   │   │   ├── App.java              # Aplicación de ejemplo
+│   │   │   ├── HttpServer.java       # Servidor TCP principal
+│   │   │   ├── HttpRequest.java      # Parseo del request y query params
+│   │   │   ├── HttpResponse.java     # Construcción de respuestas HTTP
+│   │   │   ├── Route.java            # Par (path, lambda handler)
+│   │   │   ├── WebFramework.java     # Singleton: get(), staticfiles(), start()
+│   │   │   ├── URLReader.java        # Utilidad: lectura de URLs
+│   │   │   ├── URLParcel.java        # Utilidad: parseo de URLs
+│   │   │   ├── EchoServer.java       # Servidor eco de práctica
+│   │   │   └── EchoClient.java       # Cliente eco de práctica
 │   │   └── resources/webroot/
-│   │       ├── index.html
-│   │       └── style.css
+│   │       ├── index.html            # Página de demo con formulario REST
+│   │       └── style.css             # Estilos de la página
 │   └── test/java/com/example/
-│       └── WebFrameworkTest.java
+│       └── WebFrameworkTest.java     # 11 tests unitarios (JUnit 4)
+├── docs/images/                      # Capturas de pantalla
+│   ├── index.png
+│   ├── hello.png
+│   ├── pi.png
+│   └── epsilon.png
 ├── .gitignore
 ├── pom.xml
 └── README.md
@@ -147,6 +206,22 @@ Abrir en el navegador: `http://localhost:8080/index.html`
 | `http://localhost:8080/App/hello?name=Pedro` | `Hello Pedro` |
 | `http://localhost:8080/App/pi` | `3.141592653589793` |
 | `http://localhost:8080/App/epsilon` | `2.718281828459045` |
+
+---
+
+## Capturas de pantalla
+
+### Página principal (`/index.html`)
+![index](docs/images/index.png)
+
+### Endpoint `/App/hello?name=Pedro`
+![hello](docs/images/hello.png)
+
+### Endpoint `/App/pi`
+![pi](docs/images/pi.png)
+
+### Endpoint `/App/epsilon`
+![epsilon](docs/images/epsilon.png)
 
 ---
 
